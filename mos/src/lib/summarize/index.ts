@@ -46,14 +46,14 @@ async function chat(systemPrompt: string, userPrompt: string): Promise<string> {
 // Formatting helpers
 // ---------------------------------------------------------------------------
 
-function formatNodeForPrompt(node: Node): string {
+export function formatNodeForPrompt(node: Node): string {
   const parts = [`# ${node.title} (${node.type})`];
   if (node.summary) parts.push(`Summary: ${node.summary}`);
   if (node.content) parts.push(node.content);
   return parts.join('\n');
 }
 
-function formatNodeWithEdgesForPrompt(nwe: NodeWithEdges): string {
+export function formatNodeWithEdgesForPrompt(nwe: NodeWithEdges): string {
   const lines = [formatNodeForPrompt(nwe.node)];
 
   if (nwe.edges.length > 0) {

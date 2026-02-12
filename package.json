@@ -13,6 +13,12 @@
     "build:mos": "npm -w mos run build",
     "db:generate": "npm -w @arc/db run generate",
     "db:migrate": "npm -w @arc/db run migrate",
-    "db:seed": "npm -w @arc/db run seed"
+    "db:seed": "npm -w @arc/db run seed",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
   }
 }

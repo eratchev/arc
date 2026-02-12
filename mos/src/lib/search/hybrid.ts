@@ -204,7 +204,7 @@ export async function searchNodes(
 // Merge logic
 // ---------------------------------------------------------------------------
 
-function mergeResults(
+export function mergeResults(
   vectorResults: SearchResult[],
   keywordResults: SearchResult[],
   limit: number,
