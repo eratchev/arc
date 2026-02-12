@@ -43,11 +43,9 @@ function createHandlers(state: {
   const supabase = createClient();
   const router = useRouter();
   let error = '';
-  let message = '';
 
   async function handleSubmit() {
     error = '';
-    message = '';
 
     if (state.mode === 'signin') {
       const { error: err } = await supabase.auth.signInWithPassword({
@@ -67,11 +65,11 @@ function createHandlers(state: {
       if (err) {
         error = err.message;
       } else {
-        message = 'Check your email to confirm your account.';
+        router.push('/');
       }
     }
 
-    return { error, message };
+    return { error };
   }
 
   async function handleGoogleSignIn() {
@@ -143,8 +141,7 @@ describe('LoginPage handlers', () => {
         email: 'new@b.com',
         password: 'pass',
       });
-      expect(mockPush).not.toHaveBeenCalled();
-      expect(result.message).toBe('Check your email to confirm your account.');
+      expect(mockPush).toHaveBeenCalledWith('/');
     });
 
     it('sets error on sign up failure', async () => {
@@ -160,7 +157,6 @@ describe('LoginPage handlers', () => {
       const result = await handleSubmit();
 
       expect(result.error).toBe('Email taken');
-      expect(result.message).toBe('');
     });
   });
 

@@ -9,7 +9,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -17,7 +16,6 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setMessage('');
     setLoading(true);
 
     if (mode === 'signin') {
@@ -32,7 +30,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Check your email to confirm your account.');
+        router.push('/');
       }
     }
 
@@ -108,7 +106,6 @@ export default function LoginPage() {
         </button>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
-        {message && <p className="text-sm text-green-400">{message}</p>}
 
         <p className="text-center text-sm text-gray-500">
           {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
@@ -116,7 +113,6 @@ export default function LoginPage() {
             onClick={() => {
               setMode(mode === 'signin' ? 'signup' : 'signin');
               setError('');
-              setMessage('');
             }}
             className="text-blue-400 hover:underline"
           >
