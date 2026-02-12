@@ -1,0 +1,18 @@
+{
+  "name": "arc",
+  "private": true,
+  "workspaces": [
+    "sds",
+    "mos",
+    "shared/*"
+  ],
+  "scripts": {
+    "dev:sds": "npm -w sds run dev",
+    "dev:mos": "npm -w mos run dev",
+    "build:sds": "npm -w sds run build",
+    "build:mos": "npm -w mos run build",
+    "db:generate": "npm -w @arc/db run generate",
+    "db:migrate": "npm -w @arc/db run migrate",
+    "db:seed": "npm -w @arc/db run seed"
+  }
+}
