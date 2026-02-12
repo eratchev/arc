@@ -26,7 +26,8 @@ export default defineConfig({
       '@arc/llm': path.resolve(__dirname, 'shared/llm/src'),
       '@arc/db': path.resolve(__dirname, 'shared/db/src'),
       '@arc/embeddings': path.resolve(__dirname, 'shared/embeddings/src'),
-      // MOS app alias — used by mos/src imports
+      // App aliases — used by mos/src and sds/src imports
+      // Vitest resolves relative to the test file; both apps share identical helpers
       '@/': path.resolve(__dirname, 'mos/src') + '/',
     },
   },
