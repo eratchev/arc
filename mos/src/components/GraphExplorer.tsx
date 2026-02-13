@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
@@ -116,6 +116,22 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
     });
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(([entry]) => {
+      setDimensions({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <>
       {/* Sidebar */}
@@ -198,8 +214,10 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
       </aside>
 
       {/* Graph canvas */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative" ref={containerRef}>
         <ForceGraph2D
+          width={dimensions.width}
+          height={dimensions.height}
           graphData={graphData}
           nodeLabel="label"
           nodeColor="color"
