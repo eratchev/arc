@@ -136,7 +136,7 @@ async function seed() {
     await db
       .insert(prompts)
       .values(prompt)
-      .onConflictDoNothing();
+      .onConflictDoNothing({ target: prompts.title });
     console.log(`  Seeded: ${prompt.title}`);
   }
 
