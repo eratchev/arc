@@ -9,11 +9,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * interactions by replicating the handler logic from the component.
  */
 
-const { mockSignInWithPassword, mockSignUp, mockSignInWithOAuth, mockPush } = vi.hoisted(() => ({
+const { mockSignInWithPassword, mockSignUp, mockSignInWithOAuth } = vi.hoisted(() => ({
   mockSignInWithPassword: vi.fn(),
   mockSignUp: vi.fn(),
   mockSignInWithOAuth: vi.fn(),
-  mockPush: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -26,13 +25,8 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn().mockReturnValue({ push: mockPush }),
-}));
-
-// Import the supabase client and router the same way the component does
+// Import the supabase client the same way the component does
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 // Replicate the handler logic from page.tsx for unit testing
 function createHandlers(state: {
@@ -41,8 +35,8 @@ function createHandlers(state: {
   password: string;
 }) {
   const supabase = createClient();
-  const router = useRouter();
   let error = '';
+  let redirected = false;
 
   async function handleSubmit() {
     error = '';
@@ -55,7 +49,7 @@ function createHandlers(state: {
       if (err) {
         error = err.message;
       } else {
-        router.push('/');
+        redirected = true;
       }
     } else {
       const { error: err } = await supabase.auth.signUp({
@@ -65,11 +59,11 @@ function createHandlers(state: {
       if (err) {
         error = err.message;
       } else {
-        router.push('/');
+        redirected = true;
       }
     }
 
-    return { error };
+    return { error, redirected };
   }
 
   async function handleGoogleSignIn() {
@@ -105,7 +99,7 @@ describe('LoginPage handlers', () => {
         email: 'a@b.com',
         password: 'pass',
       });
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(result.redirected).toBe(true);
       expect(result.error).toBe('');
     });
 
@@ -121,7 +115,7 @@ describe('LoginPage handlers', () => {
 
       const result = await handleSubmit();
 
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(result.redirected).toBeFalsy();
       expect(result.error).toBe('Invalid credentials');
     });
   });
@@ -141,7 +135,7 @@ describe('LoginPage handlers', () => {
         email: 'new@b.com',
         password: 'pass',
       });
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(result.redirected).toBe(true);
     });
 
     it('sets error on sign up failure', async () => {
