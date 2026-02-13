@@ -7,7 +7,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx --env-file=.env src/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.38.3",
