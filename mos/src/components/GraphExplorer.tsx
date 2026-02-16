@@ -32,6 +32,10 @@ interface GraphExplorerProps {
   edges: Edge[];
 }
 
+const NODE_TYPES = [
+  "concept", "pattern", "domain", "person", "org", "project", "note", "artifact",
+] as const;
+
 const TYPE_COLORS: Record<string, string> = {
   person: "#f59e0b",
   project: "#3b82f6",
@@ -51,6 +55,11 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
   const router = useRouter();
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newType, setNewType] = useState("concept");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const allTypes = useMemo(
     () => [...new Set(nodes.map((n) => n.type))].sort(),
@@ -145,6 +154,14 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          {!showCreateForm && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="mt-2 w-full px-3 py-2 text-sm rounded-lg transition-colors bg-blue-600 hover:bg-blue-500 text-white"
+            >
+              + New
+            </button>
+          )}
         </div>
 
         {/* Type filters */}
