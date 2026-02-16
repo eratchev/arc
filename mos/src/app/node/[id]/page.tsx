@@ -30,6 +30,7 @@ export default async function NodeDetailPage({
   }
 
   const { data: node } = await supabase
+    .schema("mos")
     .from("nodes")
     .select("*")
     .eq("id", id)
@@ -42,6 +43,7 @@ export default async function NodeDetailPage({
 
   // Fetch outgoing edges
   const { data: outgoingEdges } = await supabase
+    .schema("mos")
     .from("edges")
     .select("id, edge_type, target_id")
     .eq("source_id", id)
@@ -49,6 +51,7 @@ export default async function NodeDetailPage({
 
   // Fetch incoming edges
   const { data: incomingEdges } = await supabase
+    .schema("mos")
     .from("edges")
     .select("id, edge_type, source_id")
     .eq("target_id", id)
@@ -63,6 +66,7 @@ export default async function NodeDetailPage({
   // Fetch connected node titles
   const { data: connectedNodes } = connectedIds.length > 0
     ? await supabase
+        .schema("mos")
         .from("nodes")
         .select("id, title")
         .in("id", connectedIds)
