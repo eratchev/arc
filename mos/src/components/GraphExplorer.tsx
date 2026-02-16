@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { createNodeFromUI } from "@/lib/graph/createNodeFromUI";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
@@ -125,6 +126,22 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
     });
   };
 
+  const handleCreate = async () => {
+    setCreating(true);
+    setCreateError("");
+    try {
+      await createNodeFromUI(newTitle, newType);
+      setNewTitle("");
+      setNewType("concept");
+      setShowCreateForm(false);
+      router.refresh();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create node");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
@@ -161,6 +178,59 @@ export default function GraphExplorer({ nodes, edges }: GraphExplorerProps) {
             >
               + New
             </button>
+          )}
+          {showCreateForm && (
+            <div className="mt-2 space-y-2">
+              <input
+                type="text"
+                placeholder="Node title..."
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreate();
+                  if (e.key === "Escape") {
+                    setShowCreateForm(false);
+                    setNewTitle("");
+                    setCreateError("");
+                  }
+                }}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <select
+                value={newType}
+                onChange={(e) => setNewType(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {NODE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              {createError && (
+                <p className="text-xs text-red-400">{createError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCreate}
+                  disabled={creating || !newTitle.trim()}
+                  className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {creating ? "Creating..." : "Create"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setNewTitle("");
+                    setCreateError("");
+                  }}
+                  className="flex-1 px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
