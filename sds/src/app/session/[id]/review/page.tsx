@@ -31,13 +31,26 @@ export default async function ReviewPage({ params }: Props) {
     .eq('id', session.prompt_id)
     .single();
 
-  const { data: response } = await supabase
+  // Try final response first, fall back to most recent draft
+  let { data: response } = await supabase
     .schema('sds')
     .from('responses')
     .select('*')
     .eq('session_id', id)
     .eq('is_final', true)
     .maybeSingle();
+
+  if (!response) {
+    const { data: draft } = await supabase
+      .schema('sds')
+      .from('responses')
+      .select('*')
+      .eq('session_id', id)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    response = draft;
+  }
 
   const evaluation = response
     ? (
