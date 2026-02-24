@@ -15,6 +15,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'query is required' }, { status: 400 });
   }
 
-  const results = await hybridSearch(supabase, { query, userId: user.id });
+  const raw = await hybridSearch(supabase, { query, userId: user.id });
+  const results = raw.map((r) => ({
+    id: r.node.id,
+    title: r.node.title,
+    type: r.node.type,
+    snippet: r.node.summary || r.node.content || '',
+    score: r.score,
+  }));
   return NextResponse.json({ results });
 }
