@@ -45,6 +45,7 @@ export function SessionWorkspace({
   const [notes, setNotes] = useState(initialResponse?.notes ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [activeTab, setActiveTab] = useState<'architecture' | 'diagram' | 'notes'>(
     'architecture',
@@ -108,14 +109,13 @@ export function SessionWorkspace({
         })
         .eq('id', session.id);
 
-      // Trigger evaluation via API route (keepalive ensures the request
-      // survives the immediate router.push navigation below)
+      // Wait for evaluation to complete before navigating
       if (response) {
-        fetch('/api/evaluate', {
+        setIsEvaluating(true);
+        await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ responseId: response.id }),
-          keepalive: true,
         });
       }
 
@@ -165,7 +165,7 @@ export function SessionWorkspace({
             disabled={isSubmitting || !architectureText.trim()}
             className="rounded bg-blue-600 px-4 py-1.5 text-xs font-medium hover:bg-blue-500 disabled:opacity-50"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isEvaluating ? 'Evaluating...' : isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
         </div>
       </header>
