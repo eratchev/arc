@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { ScoreRadar } from './ScoreRadar';
+import { ReEvaluateButton } from './ReEvaluateButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -83,7 +84,8 @@ export default async function ReviewPage({ params }: Props) {
 
       {session.status === 'submitted' && !evaluation && (
         <div className="mb-8 rounded-lg border border-yellow-800 bg-yellow-950 p-4 text-yellow-300">
-          Your submission is being evaluated. Refresh this page in a moment.
+          <p>Your submission is being evaluated. Refresh this page in a moment.</p>
+          {response && <ReEvaluateButton responseId={response.id} />}
         </div>
       )}
 

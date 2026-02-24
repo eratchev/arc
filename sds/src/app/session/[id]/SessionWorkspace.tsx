@@ -108,12 +108,14 @@ export function SessionWorkspace({
         })
         .eq('id', session.id);
 
-      // Trigger evaluation via API route
+      // Trigger evaluation via API route (keepalive ensures the request
+      // survives the immediate router.push navigation below)
       if (response) {
         fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ responseId: response.id }),
+          keepalive: true,
         });
       }
 
