@@ -463,6 +463,43 @@ const SEED_PROMPTS = [
     time_limit_min: 35,
   },
   {
+    title: 'Hardware Design CI/CD Pipeline',
+    category: 'developer_tools',
+    difficulty: 'hard' as const,
+    description:
+      'Design an automated CI/CD pipeline for hardware design files (schematics, PCB layouts, BOMs) — ' +
+      'analogous to how software CI/CD works but for electronics engineering. When engineers push changes ' +
+      'to design files, the system must automatically run design rule checks (DRC), generate visual diffs ' +
+      'for schematic and layout changes, validate BOMs against component availability, and deliver results ' +
+      'back to engineers within 5 minutes. The system integrates with multiple ECAD tool formats ' +
+      '(KiCad, Altium, Eagle) and downstream PLM systems. Handle 10,000 design check runs per day ' +
+      'with design files up to 500MB each.',
+    constraints: [
+      '10,000 check runs/day',
+      'Results delivered within 5 minutes of push',
+      'Design files up to 500MB',
+      'Support multiple ECAD formats (KiCad, Altium, Eagle)',
+      'Visual diffs for schematic and PCB layer changes',
+      'BOM validation against real-time component availability',
+      'Integrate with Git-based version control and PLM systems',
+    ],
+    expected_components: [
+      'Git webhook ingestion service',
+      'Object storage for large design files (S3)',
+      'Job queue with priority and concurrency control',
+      'Containerized ECAD tool runners per format',
+      'Design rule check (DRC) engine',
+      'Visual diff generator (schematic and PCB layers)',
+      'BOM parser and component availability checker (external APIs)',
+      'PLM integration adapter',
+      'Result aggregation and reporting service',
+      'Notification and PR comment delivery',
+      'Artifact storage for diff images and reports',
+      'Worker autoscaling based on queue depth',
+    ],
+    time_limit_min: 55,
+  },
+  {
     title: 'Stock Exchange',
     category: 'fintech',
     difficulty: 'hard' as const,
