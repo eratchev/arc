@@ -387,3 +387,9 @@ npm run build:mos
 ---
 
 Built to explore AI-assisted architectural reasoning at the intersection of practice and memory.
+
+---
+
+# License
+
+MIT
