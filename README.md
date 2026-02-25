@@ -215,6 +215,25 @@ Includes:
 
 ---
 
+# Operational Considerations
+
+- **LLM latency & cost**
+  Evaluation runs are isolated from graph writes — persistence completes regardless of LLM latency. LLM provider is configurable (`LLM_PROVIDER=claude|openai`) as an operational lever for cost, latency, and availability tradeoffs.
+
+- **Idempotency guarantees**
+  `sds.mos_sync` ensures evaluation re-runs do not duplicate graph structures.
+
+- **Sync failure recovery**
+  If MOS sync fails after a successful evaluation, session data is preserved in the `sds` schema. A re-evaluate button on the review page allows manual re-triggering of the sync pipeline.
+
+- **Search performance**
+  Hybrid approach (tsvector + pgvector) balances relevance and query latency.
+
+- **Security boundary**
+  RLS enforces tenant isolation at the database layer rather than relying solely on application logic.
+
+---
+
 # Tech Stack
 
 | Layer      | Technology                     |
