@@ -295,4 +295,23 @@ npm run build:mos
 
 ---
 
+# Future Directions
+
+- **Evaluation rubric customization**
+  Current scoring dimensions (Components, Scaling, Reliability, Trade-offs) are hardcoded in the LLM prompt. A rubric editor would allow calibrating weights and criteria per prompt type or seniority level.
+
+- **Graph-based spaced repetition**
+  The existing staleness detection (concepts unpracticed for 2+ weeks) is a precursor to a full SR scheduler. Integrating an algorithm like SM-2 or FSRS would produce optimized review intervals from graph traversal and evaluation history.
+
+- **Prompt library**
+  Only 4 built-in design scenarios currently. A community-contributed or importable prompt library would expand coverage across domains (data systems, infra, ML pipelines, etc.).
+
+- **Offline embedding pipeline with cost-aware batching**
+  Embeddings are currently generated inline on sync. A background queue with batching would reduce API cost and decouple embedding latency from the write path.
+
+- **Cross-session pattern analysis**
+  LLM-powered identification of recurring architectural patterns and gaps across sessions — surfaced as graph edges rather than per-session observations.
+
+---
+
 Built to explore AI-assisted architectural reasoning at the intersection of practice and memory.
