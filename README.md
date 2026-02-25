@@ -1,13 +1,33 @@
-# Arc
+# ARC — Architecture Practice + Knowledge Graph
 
-Two connected apps for interview prep and personal knowledge management.
+ARC is an AI-native system for structured architecture practice and persistent knowledge modeling.
 
-- **SDS (System Design Simulator)** — Practice system design under time pressure, get AI-scored feedback
-- **MOS (Memory OS)** — Personal knowledge graph connecting everything you learn, prep, and build
+It consists of two tightly integrated applications:
 
-SDS feeds into MOS: every evaluated session creates nodes (tech concepts, architectures, scores) that enrich your graph. MOS surfaces what you haven't practiced recently.
+* **SDS (System Design Simulator)** — Time-boxed design practice with AI evaluation
+* **MOS (Memory OS)** — A personal knowledge graph that stores and connects architectural insights
 
-## Architecture
+Every SDS session feeds MOS, converting ephemeral practice into structured, queryable knowledge.
+
+---
+
+# Problem
+
+System design interviews — and real-world system architecture — require:
+
+* Structured thinking under constraints
+* Explicit articulation of tradeoffs
+* Failure-mode reasoning
+* Pattern recall across domains
+* Feedback loops over time
+
+Most practice sessions are isolated and forgotten.
+
+ARC turns design sessions into durable, connected architectural memory.
+
+---
+
+# System Architecture
 
 ```
 arc/
@@ -15,176 +35,214 @@ arc/
   mos/              Next.js app — Memory OS (port 3001)
   shared/
     types/          Shared TypeScript types
-    db/             Supabase client, Drizzle ORM schema, migrations, seed data
+    db/             Supabase client, Drizzle ORM schema, migrations
     llm/            LLM provider abstraction (Claude + OpenAI evaluator)
-    embeddings/     Embedding provider (OpenAI text-embedding-3-small)
-    auth/           Supabase Auth helpers (server, client, middleware)
+    embeddings/     Embedding provider
+    auth/           Supabase Auth helpers
 ```
 
-### Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 15 (App Router) + TypeScript |
-| Database | Supabase (Postgres + pgvector) |
-| Auth | Supabase Auth |
-| ORM | Drizzle (admin/migrations), Supabase client (user-scoped with RLS) |
-| LLM | Configurable — Claude (claude-sonnet-4-5-20250929) or OpenAI (gpt-4o) |
-| Embeddings | OpenAI text-embedding-3-small (1536 dimensions) |
-| Charts | Recharts |
-| Diagrams | Mermaid.js |
-| Graph viz | react-force-graph-2d |
-| Monorepo | npm workspaces |
-
-### Database
+## Core Data Model
 
 Single Supabase Postgres database with three schemas:
 
-- **`sds`** — prompts, sessions, responses, evaluations, mos_sync
-- **`mos`** — nodes (knowledge graph), edges (relationships)
-- **`core`** — embeddings (pgvector), search_results view
+* **`sds`**
 
-All tables have Row Level Security (RLS) enabled. User-scoped queries go through the Supabase client (JWT-based RLS). Admin operations (migrations, SDS-to-MOS sync, embedding pipeline) use Drizzle with the service role.
+  * prompts
+  * sessions
+  * responses
+  * evaluations
+  * mos_sync (idempotent integration tracking)
 
-## Setup
+* **`mos`**
 
-### Prerequisites
+  * nodes (knowledge graph)
+  * edges (relationships)
 
-- Node.js 18+
-- A Supabase project with the `vector` extension enabled
+* **`core`**
 
-### Environment
+  * embeddings (pgvector)
+  * search_results view
 
-Copy `.env.local` and fill in your keys:
+All tables enforce **Row Level Security (RLS)**.
 
-```bash
-cp .env.local .env.local.filled
+User-scoped queries use Supabase JWT-based access.
+Admin operations (migrations, SDS→MOS sync, embedding pipeline) use Drizzle with service role.
+
+---
+
+# SDS — System Design Simulator
+
+Timed architecture practice with AI evaluation.
+
+## Flow
+
+1. Choose a design prompt
+2. Select 30 or 60-minute mode
+3. Write architecture (text + Mermaid diagrams)
+4. Submit (manual or auto on timer expiry)
+5. LLM evaluation
+6. Persist structured results
+7. Sync into MOS graph
+
+## Evaluation Dimensions
+
+| Dimension   | Measures                                         |
+| ----------- | ------------------------------------------------ |
+| Components  | Completeness of building blocks                  |
+| Scaling     | Partitioning, replication, throughput            |
+| Reliability | Retries, DLQs, circuit breakers                  |
+| Trade-offs  | Consistency vs availability, cost vs performance |
+
+## Routes
+
+| Route                  | Purpose                      |
+| ---------------------- | ---------------------------- |
+| `/`                    | Start session / view history |
+| `/session/[id]`        | Active design session        |
+| `/session/[id]/review` | Evaluation results           |
+| `/dashboard`           | Score history + trends       |
+
+---
+
+# MOS — Memory OS
+
+Knowledge graph that grows automatically from design sessions.
+
+## Node Types
+
+`concept` · `pattern` · `domain` · `person` · `org` · `project` · `note` · `artifact`
+
+Subtype via metadata (e.g. `{ subtype: 'ski_gear' }`).
+
+## Edge Types
+
+`related_to` · `used_in` · `practiced_at` · `depends_on` · `part_of` · `connected_to` · `custom`
+
+## Features
+
+* Force-directed graph explorer
+* Hybrid semantic + keyword search
+* LLM-powered synthesis ("What do I know about X?")
+* Crib sheet generation
+* Practice staleness detection
+
+## Routes
+
+| Route            | Purpose                    |
+| ---------------- | -------------------------- |
+| `/`              | Graph explorer             |
+| `/search`        | Semantic search            |
+| `/node/[id]`     | Node details               |
+| `/crib/[nodeId]` | Generated crib sheet       |
+| `/ask`           | Conversational graph query |
+
+---
+
+# SDS + MOS Integration
+
+When an SDS session completes:
+
+1. A `note` node is created in MOS
+2. `concept` nodes are upserted
+3. `practiced_at` edges are created
+4. All mappings recorded in `sds.mos_sync`
+5. Sync is idempotent for re-evaluation runs
+
+The SDS review page links directly to synced graph nodes.
+MOS surfaces stale concepts with links back to SDS.
+
+---
+
+# Database & Search Infrastructure
+
+Initial migration: `shared/db/migrations/0000_initial.sql`
+
+Includes:
+
+* `mos.update_search_vector()` — auto tsvector updates
+* `mos.enforce_edge_ownership()` — graph integrity enforcement
+* `sds.update_updated_at()` — timestamp maintenance
+* `mos.traverse_graph()` — recursive CTE graph traversal
+* `core.semantic_search()` — cosine similarity search
+* `core.search_results` — embedding metadata join view
+
+---
+
+# Key Design Decisions
+
+* **Relational DB + pgvector instead of graph DB**
+  Lower operational overhead, sufficient for scoped personal graph.
+
+* **RLS-first security model**
+  Security boundaries enforced at database layer.
+
+* **LLM abstraction layer**
+  Avoids provider lock-in.
+
+* **Monorepo architecture**
+  Simpler coordination for 0→1 build.
+
+---
+
+# Tech Stack
+
+| Layer      | Technology                     |
+| ---------- | ------------------------------ |
+| Framework  | Next.js 15 + TypeScript        |
+| Database   | Supabase (Postgres + pgvector) |
+| Auth       | Supabase Auth                  |
+| ORM        | Drizzle + Supabase client      |
+| LLM        | Claude / OpenAI                |
+| Embeddings | text-embedding-3-small         |
+| Graph viz  | react-force-graph-2d           |
+| Charts     | Recharts                       |
+| Monorepo   | npm workspaces                 |
+
+---
+
+# Setup
+
+## Prerequisites
+
+* Node 18+
+* Supabase project with vector extension
+
+## Environment
+
 ```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_DB_URL=
 
-Required variables:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_DB_URL=postgresql://postgres:...@db.your-project.supabase.co:5432/postgres
-
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
 
 # Optional
-LLM_PROVIDER=claude          # or "openai"
+LLM_PROVIDER=claude
 EMBEDDING_PROVIDER=openai
 EMBEDDING_MODEL=text-embedding-3-small
 NEXT_PUBLIC_SDS_URL=http://localhost:3000
 NEXT_PUBLIC_MOS_URL=http://localhost:3001
 ```
 
-### Install & Run
+## Install & Run
 
 ```bash
-cd arc
 npm install
-
-# Apply database schema
 npm run db:migrate
-
-# Seed prompts (4 built-in system design scenarios)
 npm run db:seed
-
-# Run both apps
 npm run dev:sds   # http://localhost:3000
 npm run dev:mos   # http://localhost:3001
 ```
 
-### Build
+## Build
 
 ```bash
 npm run build:sds
 npm run build:mos
 ```
 
-## SDS — System Design Simulator
+---
 
-Practice system design interviews with timed sessions and AI evaluation.
-
-### Flow
-
-1. **Pick a prompt** — Choose from system design scenarios (webhook reliability, AI extraction, provider orchestration, etc.)
-2. **Choose a mode** — 30-minute or 60-minute time limit
-3. **Design** — Write your architecture in a text editor, draw diagrams with Mermaid, add notes
-4. **Submit** — Auto-submits on timer expiry, or submit early
-5. **Get evaluated** — LLM scores your design on four dimensions
-6. **Review** — See scores, radar chart, component analysis, and improvement suggestions
-
-### Evaluation Dimensions
-
-| Dimension | What it measures |
-|-----------|-----------------|
-| Components | Did you include the right building blocks? (caches, queues, databases, etc.) |
-| Scaling | Horizontal scaling, partitioning, replication considerations |
-| Reliability | Retries, circuit breakers, dead letter queues, failure handling |
-| Trade-offs | CAP theorem, consistency vs availability, cost vs performance |
-
-### Routes
-
-| Route | Purpose |
-|-------|---------|
-| `/` | Landing — start new session or view history |
-| `/session/[id]` | Active session — timer, editor, diagram |
-| `/session/[id]/review` | Post-session — evaluation results, suggestions |
-| `/dashboard` | Score history charts and trends |
-
-## MOS — Memory OS
-
-Personal knowledge graph that grows automatically from your practice sessions.
-
-### Node Types
-
-`concept` · `pattern` · `domain` · `person` · `org` · `project` · `note` · `artifact`
-
-Subtyping via `metadata.subtype` (e.g., `{type: 'artifact', metadata: {subtype: 'ski_gear'}}`).
-
-### Edge Types
-
-`related_to` · `used_in` · `practiced_at` · `knows` · `prepared_for` · `works_at` · `authored` · `read` · `connected_to` · `depends_on` · `part_of` · `custom`
-
-### Features
-
-- **Graph explorer** — Force-directed visualization with type filters and search
-- **Semantic search** — Hybrid vector + keyword search across all nodes
-- **"What do I know about X?"** — LLM synthesizes an answer by walking your graph
-- **Crib sheet generator** — Given a node, walks connections and produces a structured prep doc
-- **Practice suggestions** — Surfaces concepts you haven't practiced in over 2 weeks
-
-### Routes
-
-| Route | Purpose |
-|-------|---------|
-| `/` | Graph explorer — visual node map |
-| `/search` | Semantic search interface |
-| `/node/[id]` | Node detail + connections |
-| `/crib/[nodeId]` | Generated crib sheet for a node |
-| `/ask` | "What do I know about X?" conversational interface |
-
-## SDS + MOS Integration
-
-When an SDS session is evaluated, the system automatically:
-
-1. Creates a `note` node in MOS for the session (with scores in metadata)
-2. Upserts `concept` nodes for each architectural component found in the design
-3. Creates `practiced_at` edges linking concepts to the session node
-4. Records all mappings in `sds.mos_sync` for idempotent re-runs
-
-The SDS review page links to the synced MOS nodes. The MOS home page shows practice suggestions for stale concepts with links back to SDS.
-
-## Database Migrations
-
-The initial migration is at `shared/db/migrations/0000_initial.sql`. It creates all schemas, tables, indexes, RLS policies, triggers, and functions including:
-
-- `mos.update_search_vector()` — auto-updates tsvector on node insert/update
-- `mos.enforce_edge_ownership()` — validates edge source/target belong to the same user
-- `sds.update_updated_at()` — maintains `updated_at` timestamps
-- `mos.traverse_graph()` — recursive CTE for N-hop graph traversal
-- `core.semantic_search()` — cosine similarity search over embeddings
-- `core.search_results` — view joining embeddings to display metadata
+Built to explore AI-assisted architectural reasoning at the intersection of practice and memory.
