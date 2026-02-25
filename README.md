@@ -74,6 +74,78 @@ arc/
 
 ## Core Data Model
 
+```mermaid
+erDiagram
+    SDS_PROMPTS {
+        uuid id PK
+        text title
+        text category
+        text difficulty
+    }
+    SDS_SESSIONS {
+        uuid id PK
+        uuid user_id
+        uuid prompt_id FK
+        text mode
+        text status
+    }
+    SDS_RESPONSES {
+        uuid id PK
+        uuid session_id FK
+        int version
+        bool is_final
+    }
+    SDS_EVALUATIONS {
+        uuid id PK
+        uuid response_id FK
+        int overall_score
+        int component_score
+        int scaling_score
+        int reliability_score
+        int tradeoff_score
+    }
+    SDS_MOS_SYNC {
+        uuid id PK
+        uuid session_id FK
+        uuid mos_node_id FK
+        text source_type
+        text source_key
+    }
+    MOS_NODES {
+        uuid id PK
+        uuid user_id
+        text type
+        text slug
+        text title
+        tsvector search_vector
+    }
+    MOS_EDGES {
+        uuid id PK
+        uuid user_id
+        uuid source_id FK
+        uuid target_id FK
+        text edge_type
+        float weight
+    }
+    CORE_EMBEDDINGS {
+        uuid id PK
+        uuid user_id
+        text entity_type
+        uuid entity_id
+        vector1536 embedding
+        text model
+    }
+
+    SDS_PROMPTS ||--o{ SDS_SESSIONS : "has"
+    SDS_SESSIONS ||--o{ SDS_RESPONSES : "has"
+    SDS_RESPONSES ||--o| SDS_EVALUATIONS : "evaluated by"
+    SDS_SESSIONS ||--o{ SDS_MOS_SYNC : "synced via"
+    MOS_NODES ||--o{ SDS_MOS_SYNC : "referenced in"
+    MOS_NODES ||--o{ MOS_EDGES : "source"
+    MOS_NODES ||--o{ MOS_EDGES : "target"
+    MOS_NODES ||--o{ CORE_EMBEDDINGS : "embedded as"
+```
+
 Single Supabase Postgres database with three schemas:
 
 * **`sds`**
