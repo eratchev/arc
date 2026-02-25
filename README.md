@@ -29,6 +29,37 @@ ARC turns design sessions into durable, connected architectural memory.
 
 # System Architecture
 
+```mermaid
+flowchart LR
+    U([User])
+
+    subgraph SDS["SDS — System Design Simulator"]
+        S1[Design] --> S2[Evaluate] --> S3[Review]
+    end
+
+    L1["LLM — Claude / OpenAI"]
+
+    subgraph DB["Postgres · Supabase"]
+        D1[(sds)]
+        D2[(mos + pgvector)]
+    end
+
+    subgraph MOS["MOS — Memory OS"]
+        M1[Graph Explorer]
+        M2[Semantic Search]
+        M3[Ask / Crib Sheet]
+    end
+
+    U --> S1
+    S2 <-->|evaluate| L1
+    S2 --> D1
+    S2 -->|sync concepts & edges| D2
+    D2 --> M1
+    D2 --> M2
+    D2 --> M3
+    M3 <-->|synthesize| L1
+```
+
 ```
 arc/
   sds/              Next.js app — System Design Simulator (port 3000)
