@@ -33,6 +33,12 @@ describe('OpenAIEmbeddings', () => {
         input: 'hello',
       });
     });
+
+    it('throws when API returns empty data array', async () => {
+      mockEmbeddingsCreate.mockResolvedValue({ data: [] });
+      const provider = new OpenAIEmbeddings('test-key');
+      await expect(provider.embed('hello')).rejects.toThrow('No embedding returned from OpenAI');
+    });
   });
 
   describe('embedBatch', () => {

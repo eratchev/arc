@@ -239,9 +239,10 @@ export async function getConnections(
 
     const nextFrontier: string[] = [];
     const neighborIds = new Set<string>();
+    const frontierSet = new Set(frontier);
 
     for (const edge of edges) {
-      const neighborId = edge.source_id === nodeId || frontier.includes(edge.source_id)
+      const neighborId = edge.source_id === nodeId || frontierSet.has(edge.source_id)
         ? edge.target_id
         : edge.source_id;
 
@@ -260,7 +261,7 @@ export async function getConnections(
     const nodeMap = new Map(neighborNodes.map((n) => [n.id, n]));
 
     for (const edge of edges) {
-      const neighborId = edge.source_id === nodeId || frontier.includes(edge.source_id)
+      const neighborId = edge.source_id === nodeId || frontierSet.has(edge.source_id)
         ? edge.target_id
         : edge.source_id;
 

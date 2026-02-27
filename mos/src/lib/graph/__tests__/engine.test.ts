@@ -227,6 +227,44 @@ describe('getConnections', () => {
     expect(result.length).toBeGreaterThan(0);
     expect(result[0].depth).toBe(1);
   });
+
+  it('returns depth-2 connections using frontier expansion', async () => {
+    // n1 --(hop1)--> n2 --(hop2)--> n3
+    const hop1Edge: Edge = { ...edgeFixture, id: 'e1', source_id: 'n1', target_id: 'n2' };
+    const hop2Edge: Edge = { ...edgeFixture, id: 'e2', source_id: 'n2', target_id: 'n3' };
+    const n2: Node = { ...nodeFixture, id: 'n2', title: 'Hop1' };
+    const n3: Node = { ...nodeFixture, id: 'n3', title: 'Hop2' };
+
+    // Calls: hop1 edges x2 (out+in), hop1 nodes, hop2 edges x2, hop2 nodes
+    const responses = [
+      { data: [hop1Edge], error: null }, // hop1 outgoing
+      { data: [], error: null },          // hop1 incoming
+      { data: [n2], error: null },        // hop1 node fetch
+      { data: [hop2Edge], error: null }, // hop2 outgoing
+      { data: [], error: null },          // hop2 incoming
+      { data: [n3], error: null },        // hop2 node fetch
+    ];
+
+    let callCount = 0;
+    const mockFrom = vi.fn().mockImplementation(() => {
+      const chain = createChain();
+      const response = responses[callCount++] ?? { data: [], error: null };
+      chain.then = vi.fn().mockImplementation((r: (v: unknown) => void) => r(response));
+      return chain;
+    });
+
+    const client = {
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as unknown as Parameters<typeof getConnections>[0];
+
+    const result = await getConnections(client, 'n1', { depth: 2 });
+    const depths = result.map((r) => r.depth);
+    expect(depths).toContain(1);
+    expect(depths).toContain(2);
+    const hop2Result = result.find((r) => r.node.id === 'n3');
+    expect(hop2Result).toBeDefined();
+    expect(hop2Result!.depth).toBe(2);
+  });
 });
 
 describe('getNodeWithEdges', () => {

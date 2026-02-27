@@ -112,11 +112,14 @@ export function SessionWorkspace({
       // Wait for evaluation to complete before navigating
       if (response) {
         setIsEvaluating(true);
-        await fetch('/api/evaluate', {
+        const evalRes = await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ responseId: response.id }),
         });
+        if (!evalRes.ok) {
+          console.error('Evaluation failed:', await evalRes.text());
+        }
       }
 
       router.push(`/session/${session.id}/review`);

@@ -22,7 +22,9 @@ export class OpenAIEmbeddings implements EmbeddingProvider {
       model: this.model,
       input: text,
     });
-    return result.data[0].embedding;
+    const embedding = result.data[0]?.embedding;
+    if (!embedding) throw new Error('No embedding returned from OpenAI');
+    return embedding;
   }
 
   async embedBatch(texts: string[]): Promise<number[][]> {

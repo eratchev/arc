@@ -25,8 +25,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Response not found' }, { status: 404 });
   }
 
-  const session = response.sessions as Record<string, unknown>;
-  const prompt = session.prompts as Record<string, unknown>;
+  const session = response.sessions as Record<string, unknown> | null;
+  if (!session) {
+    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+  }
+
+  const prompt = session.prompts as Record<string, unknown> | null;
+  if (!prompt) {
+    return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
+  }
 
   // Dynamically import evaluator to keep it server-only
   const { createEvaluator } = await import('@arc/llm');
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
         components_found: result.components_found,
       },
     ).catch((err) => console.error('MOS sync failed:', err));
-  });
+  }).catch((err) => console.error('MOS sync import failed:', err));
 
   return NextResponse.json({ success: true });
 }
