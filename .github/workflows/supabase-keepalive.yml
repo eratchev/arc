@@ -11,14 +11,17 @@ jobs:
     name: Ping Supabase REST API
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase with a real query
+      - name: Ping Supabase via keepalive RPC
         run: |
           echo "Pinging Supabase..."
           response=$(curl --silent --show-error --fail \
             --max-time 30 \
             --retry 3 --retry-delay 5 \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/embeddings?select=id&limit=1" \
+            --request POST \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/keepalive" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            --data '{}')
           echo "Response: $response"
           echo "Supabase is active."
