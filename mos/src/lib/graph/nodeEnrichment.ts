@@ -81,6 +81,7 @@ export async function searchNodesFromUI(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   });
+  // Search is best-effort: return empty results silently to keep the typeahead functional.
   if (!res.ok) return [];
   const data = await res.json();
   return data.results ?? [];

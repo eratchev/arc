@@ -69,6 +69,11 @@ describe('addEdgeFromUI', () => {
 
     await expect(addEdgeFromUI('src', 'tgt', 'related_to')).rejects.toThrow('Duplicate edge');
   });
+
+  it('throws generic message when server error has no message', async () => {
+    mockFetch.mockResolvedValue({ ok: false, json: () => Promise.resolve({}) });
+    await expect(addEdgeFromUI('src', 'tgt', 'related_to')).rejects.toThrow('Failed to add connection');
+  });
 });
 
 describe('removeEdgeFromUI', () => {
@@ -90,6 +95,11 @@ describe('removeEdgeFromUI', () => {
     });
 
     await expect(removeEdgeFromUI('e1')).rejects.toThrow('Edge not found');
+  });
+
+  it('throws generic message when server error has no message', async () => {
+    mockFetch.mockResolvedValue({ ok: false, json: () => Promise.resolve({}) });
+    await expect(removeEdgeFromUI('e1')).rejects.toThrow('Failed to remove connection');
   });
 });
 
