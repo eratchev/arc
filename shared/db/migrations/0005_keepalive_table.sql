@@ -15,6 +15,8 @@ INSERT INTO public.keepalive (id, last_ping) VALUES (1, now())
 -- Allow the anon role to call the RPC and read the table (no sensitive data here).
 GRANT SELECT ON public.keepalive TO anon;
 
+DROP FUNCTION IF EXISTS public.keepalive();
+
 CREATE OR REPLACE FUNCTION public.keepalive()
 RETURNS timestamptz
 LANGUAGE sql
