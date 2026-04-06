@@ -308,7 +308,7 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
           <div className="space-y-1 mb-4">
             {displayedConnections.map((conn, i) => (
               <div
-                key={conn.edgeId ?? `added-${i}`}
+                key={conn.edgeId ?? conn.uid ?? `added-${i}`}
                 className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-900"
               >
                 <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
                   </span>
                 </div>
                 <button
-                  onClick={() => handleRemoveConnection(conn.edgeId, (conn as LocalConnection).uid)}
+                  onClick={() => handleRemoveConnection(conn.edgeId, conn.uid)}
                   className="text-gray-500 hover:text-red-400 transition-colors px-1"
                   aria-label={`Remove connection to ${conn.nodeTitle}`}
                 >
