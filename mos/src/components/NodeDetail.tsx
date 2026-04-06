@@ -13,6 +13,8 @@ import {
   type Connection,
 } from '@/lib/graph/nodeEnrichment';
 
+type LocalConnection = Connection & { uid?: string };
+
 const NODE_TYPES: NodeType[] = [
   'concept', 'pattern', 'domain', 'person', 'org', 'project', 'note', 'artifact',
 ];
@@ -52,7 +54,13 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
 
   // Connection diff tracking
   const [removedEdgeIds, setRemovedEdgeIds] = useState<Set<string>>(new Set());
-  const [addedConnections, setAddedConnections] = useState<Connection[]>([]);
+  const [addedConnections, setAddedConnections] = useState<LocalConnection[]>([]);
+
+  // Re-sync connection diff state when server re-fetches after router.refresh()
+  useEffect(() => {
+    setRemovedEdgeIds(new Set());
+    setAddedConnections([]);
+  }, [initialConnections]);
 
   // Add-connection form
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,11 +111,11 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
     setEditing(false);
   }
 
-  function handleRemoveConnection(edgeId: string | null, addedIndex: number | null) {
+  function handleRemoveConnection(edgeId: string | null, uid: string | undefined) {
     if (edgeId !== null) {
       setRemovedEdgeIds((prev) => new Set([...prev, edgeId]));
-    } else if (addedIndex !== null) {
-      setAddedConnections((prev) => prev.filter((_, i) => i !== addedIndex));
+    } else if (uid !== undefined) {
+      setAddedConnections((prev) => prev.filter((c) => c.uid !== uid));
     }
   }
 
@@ -121,6 +129,7 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
         nodeId: pendingTarget.id,
         nodeTitle: pendingTarget.title,
         direction: 'outgoing',
+        uid: Math.random().toString(36).slice(2),
       },
     ]);
     setPendingTarget(null);
@@ -167,19 +176,20 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
       setEditing(false);
     } catch (err: unknown) {
       setError((err as Error).message ?? 'Save failed');
+      router.refresh(); // reload server state so UI reflects what actually persisted
     } finally {
       setSaving(false);
     }
   }
 
   // Derive displayed connections from server data + local diff
-  const visibleOriginal = initialConnections.filter(
+  const visibleOriginal: LocalConnection[] = initialConnections.filter(
     (c) => c.edgeId === null || !removedEdgeIds.has(c.edgeId),
   );
-  const displayedConnections = [...visibleOriginal, ...addedConnections];
+  const displayedConnections: LocalConnection[] = [...visibleOriginal, ...addedConnections];
 
   // Group by edge type for read mode
-  const grouped = new Map<string, Connection[]>();
+  const grouped = new Map<string, LocalConnection[]>();
   for (const conn of displayedConnections) {
     const existing = grouped.get(conn.edgeType) ?? [];
     existing.push(conn);
@@ -296,37 +306,29 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
 
         {editing ? (
           <div className="space-y-1 mb-4">
-            {displayedConnections.map((conn, i) => {
-              const isAdded = conn.edgeId === null;
-              const addedIndex = isAdded
-                ? addedConnections.findIndex(
-                    (c) => c.nodeId === conn.nodeId && c.edgeType === conn.edgeType,
-                  )
-                : null;
-              return (
-                <div
-                  key={conn.edgeId ?? `added-${i}`}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-900"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">
-                      {conn.direction === 'outgoing' ? '→' : '←'}
-                    </span>
-                    <span className="text-sm text-gray-200">{conn.nodeTitle}</span>
-                    <span className="text-xs text-gray-500 italic">
-                      {conn.edgeType.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveConnection(conn.edgeId, addedIndex)}
-                    className="text-gray-500 hover:text-red-400 transition-colors px-1"
-                    aria-label={`Remove connection to ${conn.nodeTitle}`}
-                  >
-                    ×
-                  </button>
+            {displayedConnections.map((conn, i) => (
+              <div
+                key={conn.edgeId ?? `added-${i}`}
+                className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-900"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {conn.direction === 'outgoing' ? '→' : '←'}
+                  </span>
+                  <span className="text-sm text-gray-200">{conn.nodeTitle}</span>
+                  <span className="text-xs text-gray-500 italic">
+                    {conn.edgeType.replace(/_/g, ' ')}
+                  </span>
                 </div>
-              );
-            })}
+                <button
+                  onClick={() => handleRemoveConnection(conn.edgeId, (conn as LocalConnection).uid)}
+                  className="text-gray-500 hover:text-red-400 transition-colors px-1"
+                  aria-label={`Remove connection to ${conn.nodeTitle}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         ) : grouped.size > 0 ? (
           <div className="space-y-4 mb-4">
