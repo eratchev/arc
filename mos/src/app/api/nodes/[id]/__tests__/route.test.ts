@@ -31,8 +31,10 @@ vi.mock('next/server', () => ({
 
 import { PATCH } from '../route';
 
-function makeRequest(body: unknown) {
-  return { json: () => Promise.resolve(body) } as unknown as import('next/server').NextRequest;
+function makeRequest(body: unknown, jsonFn?: () => Promise<unknown>) {
+  return {
+    json: jsonFn ? jsonFn : () => Promise.resolve(body),
+  } as unknown as import('next/server').NextRequest;
 }
 
 function makeContext(id: string) {
@@ -95,5 +97,41 @@ describe('PATCH /api/nodes/[id]', () => {
     const res = await PATCH(makeRequest({ title: 'X' }), makeContext('n1'));
 
     expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Internal server error' });
+  });
+
+  it('returns 400 on invalid JSON body', async () => {
+    const res = await PATCH(
+      makeRequest(undefined, () => Promise.reject(new Error('Invalid JSON'))),
+      makeContext('n1'),
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid JSON body' });
+  });
+
+  it('returns 400 when no updatable fields provided', async () => {
+    const res = await PATCH(makeRequest({}), makeContext('n1'));
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'No updatable fields provided' });
+  });
+
+  it('forwards metadata field', async () => {
+    const updated = { id: 'n1', metadata: { foo: 'bar' } };
+    mockUpdateNode.mockResolvedValue(updated);
+
+    const res = await PATCH(
+      makeRequest({ metadata: { foo: 'bar' } }),
+      makeContext('n1'),
+    );
+
+    expect(mockUpdateNode).toHaveBeenCalledWith(
+      expect.anything(),
+      'n1',
+      { metadata: { foo: 'bar' } },
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ node: updated });
   });
 });

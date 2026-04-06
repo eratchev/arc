@@ -16,15 +16,28 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Parse request body with error handling
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
   const { id } = await params;
-  const body = await request.json();
-  const { title, type, summary, content } = body;
+  const { title, type, summary, content, metadata } = body;
 
   const updates: UpdateNodeInput = {};
   if (title !== undefined) updates.title = title;
   if (type !== undefined) updates.type = type;
   if (summary !== undefined) updates.summary = summary;
   if (content !== undefined) updates.content = content;
+  if (metadata !== undefined) updates.metadata = metadata;
+
+  // Guard against empty update
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No updatable fields provided' }, { status: 400 });
+  }
 
   try {
     const node = await updateNode(supabase, id, updates);
