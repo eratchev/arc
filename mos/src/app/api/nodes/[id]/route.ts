@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { updateNode } from '@/lib/graph/engine';
 import type { UpdateNodeInput } from '@/lib/graph/engine';
+import type { NodeType } from '@arc/types';
 
 export async function PATCH(
   request: NextRequest,
@@ -28,11 +29,11 @@ export async function PATCH(
   const { title, type, summary, content, metadata } = body;
 
   const updates: UpdateNodeInput = {};
-  if (title !== undefined) updates.title = title;
-  if (type !== undefined) updates.type = type;
-  if (summary !== undefined) updates.summary = summary;
-  if (content !== undefined) updates.content = content;
-  if (metadata !== undefined) updates.metadata = metadata;
+  if (title !== undefined) updates.title = title as string;
+  if (type !== undefined) updates.type = type as NodeType;
+  if (summary !== undefined) updates.summary = summary as string | null;
+  if (content !== undefined) updates.content = content as string | null;
+  if (metadata !== undefined) updates.metadata = metadata as Record<string, unknown>;
 
   // Guard against empty update
   if (Object.keys(updates).length === 0) {

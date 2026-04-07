@@ -53,7 +53,7 @@ describe('GET /api/suggestions', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    fromResults = { _user: null } as typeof fromResults;
+    fromResults = { _user: null } as unknown as typeof fromResults;
     const response = await GET();
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: 'Unauthorized' });
@@ -64,7 +64,7 @@ describe('GET /api/suggestions', () => {
       _user: { id: 'u1' },
       nodes: { data: [], error: null },
       edges: { data: [], error: null },
-    } as typeof fromResults;
+    } as unknown as typeof fromResults;
 
     const response = await GET();
     expect(response.body).toEqual({ suggestions: [] });
@@ -86,10 +86,13 @@ describe('GET /api/suggestions', () => {
         ],
         error: null,
       },
-    } as typeof fromResults;
+    } as unknown as typeof fromResults;
 
     const response = await GET();
-    const suggestions = response.body.suggestions;
+    const suggestions = ((response.body as unknown) as Record<string, unknown>).suggestions as Array<{
+      concept_id: string;
+      days_since_practice: number | null;
+    }>;
 
     expect(suggestions).toHaveLength(2);
     // c2 (never practiced) should come first
@@ -115,10 +118,10 @@ describe('GET /api/suggestions', () => {
         ],
         error: null,
       },
-    } as typeof fromResults;
+    } as unknown as typeof fromResults;
 
     const response = await GET();
-    expect(response.body.suggestions).toHaveLength(0);
+    expect((((response.body as unknown) as Record<string, unknown>).suggestions as unknown[])).toHaveLength(0);
   });
 
   it('marks from_sds correctly', async () => {
@@ -132,15 +135,18 @@ describe('GET /api/suggestions', () => {
         error: null,
       },
       edges: { data: [], error: null },
-    } as typeof fromResults;
+    } as unknown as typeof fromResults;
 
     const response = await GET();
-    const suggestions = response.body.suggestions;
+    const suggestions = (((response.body as unknown) as Record<string, unknown>).suggestions) as Array<{
+      concept_id: string;
+      from_sds: boolean;
+    }>;
 
-    const sds = suggestions.find((s: { concept_id: string }) => s.concept_id === 'c1');
-    const manual = suggestions.find((s: { concept_id: string }) => s.concept_id === 'c2');
-    expect(sds.from_sds).toBe(true);
-    expect(manual.from_sds).toBe(false);
+    const sds = suggestions.find((s) => s.concept_id === 'c1');
+    const manual = suggestions.find((s) => s.concept_id === 'c2');
+    expect(sds?.from_sds).toBe(true);
+    expect(manual?.from_sds).toBe(false);
   });
 
   it('limits results to 10', async () => {
@@ -156,9 +162,9 @@ describe('GET /api/suggestions', () => {
       _user: { id: 'u1' },
       nodes: { data: concepts, error: null },
       edges: { data: [], error: null },
-    } as typeof fromResults;
+    } as unknown as typeof fromResults;
 
     const response = await GET();
-    expect(response.body.suggestions).toHaveLength(10);
+    expect((((response.body as unknown) as Record<string, unknown>).suggestions as unknown[])).toHaveLength(10);
   });
 });

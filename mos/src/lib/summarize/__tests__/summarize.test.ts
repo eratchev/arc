@@ -157,7 +157,7 @@ describe('whatDoIKnow', () => {
 
   it('calls Claude with search results when nodes found', async () => {
     vi.mocked(hybridSearch).mockResolvedValue([
-      { node: makeNode(), score: 0.9 },
+      { node: makeNode(), score: 0.9, source: 'hybrid' },
     ]);
     mockMessagesCreate.mockResolvedValue({
       content: [{ type: 'text', text: 'Here is what you know about caching.' }],
