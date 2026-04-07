@@ -228,6 +228,8 @@ Subtype via metadata (e.g. `{ subtype: 'ski_gear' }`).
 * LLM-powered synthesis ("What do I know about X?")
 * Crib sheet generation
 * Practice staleness detection
+* Inline node editing (title, type, summary, content)
+* Manual connection management (add/remove edges directly from the node detail page)
 
 ## Routes
 
