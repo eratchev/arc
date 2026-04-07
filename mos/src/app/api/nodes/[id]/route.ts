@@ -29,7 +29,13 @@ export async function PATCH(
   const { title, type, summary, content, metadata } = body;
 
   const updates: UpdateNodeInput = {};
-  if (title !== undefined) updates.title = title as string;
+  if (title !== undefined) {
+    const trimmed = (title as string).trim();
+    if (!trimmed) {
+      return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 });
+    }
+    updates.title = trimmed;
+  }
   if (type !== undefined) updates.type = type as NodeType;
   if (summary !== undefined) updates.summary = summary as string | null;
   if (content !== undefined) updates.content = content as string | null;

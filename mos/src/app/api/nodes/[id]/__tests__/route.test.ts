@@ -110,6 +110,12 @@ describe('PATCH /api/nodes/[id]', () => {
     expect(res.body).toEqual({ error: 'Invalid JSON body' });
   });
 
+  it('returns 400 when title is blank or empty string', async () => {
+    const res = await PATCH(makeRequest({ title: '   ' }), makeContext('n1'));
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Title cannot be empty' });
+  });
+
   it('returns 400 when no updatable fields provided', async () => {
     const res = await PATCH(makeRequest({}), makeContext('n1'));
 

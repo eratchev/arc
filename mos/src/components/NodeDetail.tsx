@@ -129,7 +129,7 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
         nodeId: pendingTarget.id,
         nodeTitle: pendingTarget.title,
         direction: 'outgoing',
-        uid: Math.random().toString(36).slice(2),
+        uid: crypto.randomUUID(),
       },
     ]);
     setPendingTarget(null);
@@ -176,7 +176,9 @@ export function NodeDetail({ node, connections: initialConnections }: Props) {
       setEditing(false);
     } catch (err: unknown) {
       setError((err as Error).message ?? 'Save failed');
-      router.refresh(); // reload server state so UI reflects what actually persisted
+      // Refresh to reload server state so the UI reflects what actually persisted.
+      // Node field inputs retain the user's unsaved edits for retry.
+      router.refresh();
     } finally {
       setSaving(false);
     }
