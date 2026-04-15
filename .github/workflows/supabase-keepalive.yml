@@ -11,12 +11,49 @@ jobs:
     name: Ping Supabase REST API
     runs-on: ubuntu-latest
     steps:
+      - name: Restore project if paused
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "Checking project status via Management API..."
+          status=$(curl --silent \
+            --max-time 15 \
+            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | \
+            python3 -c "import sys,json; print(json.load(sys.stdin).get('status','unknown'))")
+          echo "Project status: $status"
+
+          if [ "$status" = "INACTIVE" ]; then
+            echo "Project is paused. Restoring..."
+            curl --silent --show-error --fail \
+              --max-time 30 \
+              --request POST \
+              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/restore" \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              -H "Content-Type: application/json"
+            echo "Restore triggered. Waiting for project to come back online..."
+            for i in $(seq 1 12); do
+              sleep 15
+              status=$(curl --silent \
+                --max-time 15 \
+                "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}" \
+                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | \
+                python3 -c "import sys,json; print(json.load(sys.stdin).get('status','unknown'))")
+              echo "  Status after ${i}x15s: $status"
+              if [ "$status" = "ACTIVE_HEALTHY" ]; then
+                echo "Project is back online."
+                break
+              fi
+            done
+          fi
+
       - name: Ping Supabase via keepalive RPC
         run: |
           echo "Pinging Supabase..."
           response=$(curl --silent --show-error --fail \
             --max-time 30 \
-            --retry 3 --retry-delay 5 \
+            --retry 3 --retry-delay 10 \
             --request POST \
             "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/keepalive" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
